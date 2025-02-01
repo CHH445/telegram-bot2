@@ -1,35 +1,40 @@
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# Deinen Bot-Token hier einfügen!
-TOKEN = "7578687524:AAEYdO9F4HfnmM4wj4u4fBD8ObIb1DJi7ds"
-bot = telebot.TeleBot(TOKEN)
+# Token einfügen
+BOT_TOKEN = "7578687524:AAEYdO9F4HfnmM4wj4u4fBD8ObIb1DJi7ds"
+bot = telebot.TeleBot(BOT_TOKEN)
 
-# /start-Befehl
-@bot.message_handler(commands=["start"])
+@bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Hallo! Ich bin dein Telegram-Bot. Schreibe /hilfe für eine Liste der Befehle.")
+    chat_id = message.chat.id
 
-# /hilfe-Befehl
-@bot.message_handler(commands=["hilfe"])
-def send_help(message):
-    bot.reply_to(message, "Verfügbare Befehle:\n/start - Startet den Bot\n/hilfe - Zeigt diese Hilfe\n/info - Zeigt Infos")
+    # Nachricht senden
+    text = "This Is The Official Binance Loan Bot.\nSelect “CLICK HERE TO GET LOAN” To Get Started\n\n🔝 Main Menu"
+    bot.send_message(chat_id, text, reply_markup=main_menu())
 
-# /info-Befehl
-@bot.message_handler(commands=["info"])
-def send_info(message):
-    bot.reply_to(message, "Dieser Bot wurde erstellt, um dir zu helfen! 😊")
+# Funktion für das Hauptmenü
+def main_menu():
+    markup = InlineKeyboardMarkup()
+    
+    btn_loan = InlineKeyboardButton("✅ Click here to get Loan", callback_data="get_loan")
+    btn_support = InlineKeyboardButton("💬 Support", callback_data="support")
+    btn_announcement = InlineKeyboardButton("📢 Announcement", callback_data="announcement")
 
-# Automatische Antworten auf bestimmte Wörter
-@bot.message_handler(func=lambda message: True)
-def auto_reply(message):
-    text = message.text.lower()
-    if "hallo" in text:
-        bot.reply_to(message, "Hallo! Wie kann ich dir helfen?")
-    elif "danke" in text:
-        bot.reply_to(message, "Gerne! 😊")
-    elif "hilfe" in text:
-        bot.reply_to(message, "Brauchst du Hilfe? Schreibe /hilfe für eine Liste der Befehle!")
+    markup.add(btn_loan)
+    markup.add(btn_support, btn_announcement)
+
+    return markup
+
+# Callback-Funktion für die Buttons
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if call.data == "get_loan":
+        bot.send_message(call.message.chat.id, "🔹 You selected: Get Loan\n\n➡ Please enter the loan amount.")
+    elif call.data == "support":
+        bot.send_message(call.message.chat.id, "🔹 You selected: Support\n\n📞 Contact us at @SupportUsername")
+    elif call.data == "announcement":
+        bot.send_message(call.message.chat.id, "🔹 Latest Announcements:\n\n🚀 New features coming soon!")
 
 # Bot starten
-print("Bot läuft...")
-bot.infinity_polling()
+bot.polling()
