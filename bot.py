@@ -48,7 +48,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
 def main():
     # Replace 'YOUR_TOKEN' with your actual bot token
-    updater = Updater("7578687524:AAEYdO9F4HfnmM4wj4u4fBD8ObIb1DJi7ds", use_context=True)
+    updater = Updater("7578687524:AAEYdO9F4HfnmM4wj4u4fBD8ObIb1DJi7ds")  # <-- Removed `use_context=True`
     dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
