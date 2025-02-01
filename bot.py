@@ -1,5 +1,5 @@
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
 
 # States for the conversation handler
 SSN, URGENCY, COIN, AMOUNT = range(4)
@@ -54,10 +54,10 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            SSN: [MessageHandler(Filters.text & ~Filters.command, request_ssn)],
-            URGENCY: [MessageHandler(Filters.text & ~Filters.command, request_urgency)],
-            COIN: [MessageHandler(Filters.text & ~Filters.command, request_coin)],
-            AMOUNT: [MessageHandler(Filters.text & ~Filters.command, request_amount)],
+            SSN: [MessageHandler(filters.TEXT & ~filters.COMMAND, request_ssn)],
+            URGENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, request_urgency)],
+            COIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, request_coin)],
+            AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, request_amount)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
